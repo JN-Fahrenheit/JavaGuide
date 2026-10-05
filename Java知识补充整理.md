@@ -773,7 +773,7 @@ Spring 应用通常采用三层架构：Controller（控制层）→ Service（�
 - DAO(Repository/Mapper)：直接与数据库交互，执行 SQL 或 ORM 映射。这一层才真正实现 CRUD 的底层操作。‌
   > 标准请求流程：客户端请求 → Controller → Service → DAO → 数据库，响应则按相反方向返回。‌
 
-# 着重待办
+# 着重待办-接口自动化
 ## 关于rest-assured框架
 https://home.openweathermap.org/
 注册账号：786637288@qq.com 13612353575
@@ -803,3 +803,19 @@ https://en.wikipedia.org/wiki/Domain-driven_design
 ## 参考资料
 - [RestAssured 官方入门](https://github.com/rest-assured/rest-assured/wiki/GettingStarted)
 - [原中文参考](https://github.com/RookieTester/rest-assured-doc/blob/master/2016-12-12-%E3%80%90%E6%8E%A5%E5%8F%A3%E6%B5%8B%E8%AF%95%E3%80%91rest-assured%E7%94%A8%E6%88%B7%E6%89%8B%E5%86%8C%E4%B8%AD%E6%96%87%E7%89%88.markdown)
+
+## 接口自动化选择
+- 接口自动化：RestAssured（Java 首选 DSL）、requests（Python，需配合 Behave 而非原生 Cucumber-JVM），集成 JsonPath/XMLPath 解析与 Hamcrest/AssertJ 断言 
+- 接口自动化测试框架支持 JSON Schema 强校验
+    用 JSON 写的 Schema 规则，去校验另一个 JSON 数据是否符合规则—— 不是 “不用 JSON”，而是用 JSON 定义规则，再用规则校验 JSON。
+    https://agent.csdn.net/6a4e72a9662f9a54cb8c19e4.html?spm=1001.2101.3001.6650.11&utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EElasticSearch%7Eactivity-11-156572285-blog-162397403.235%5Ev43%5Epc_blog_bottom_relevance_base8&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EElasticSearch%7Eactivity-11-156572285-blog-162397403.235%5Ev43%5Epc_blog_bottom_relevance_base8&utm_relevant_index=15#devmenu2
+
+- RestAssured 分层落地（核心交易）
+1. 针对银行高风险核心交易：转账、扣款、清算、签名验签、加密报文
+2. 统一封装：Base 请求、网关签名、统一 header、异常拦截
+3. 环境中心化：配置文件统一管理多环境，动态切换
+4. 数据可编程：动态生成流水号、金额、随机交易数据，避免重复交易
+5. 深度校验：自定义金融规则校验、余额校验、状态机校验
+6. 核心特点：底层搭配 TestNG/JUnit5 管理用例，支持POJO映射和复杂的断言逻辑
+7. 使用场景：团队用java技术栈，需要深度定制，和CI/CD深度绑定
+8. 优势：灵活、可定制、能承载银行复杂金融逻辑

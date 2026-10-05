@@ -156,6 +156,62 @@ Alt + Insert        选择 Dependency‌，打开 Maven Artifact 搜索框，自
    7. 使用方式：在方法上面输入 `/**` ，按下`Enter键`，自动解析当前方法所有入参，生成信息
    8. 参考示例：https://blog.csdn.net/blsc886/article/details/149095326
 
+## idea编译和maven编译
+1. idea下的project和module
+```
+project类似代码目录父模块，代表项目名
+module模块是代码的具体表现形式，有些大型项目使用多模块编程
+```
+2. 关于Project Structure (ctrl+shift+alt+S)
+- Project Settings：项目设置（最重要）
+  > https://developer.cloud.tencent.com/article/1952865 
+  - Project: 设置对所有module模块生效
+  - Modules：一个项目下可以有多个模块，默认直接沿用projects下的配置；本模块的依赖情况默认存储在项目的{moduleName}.iml文件里
+  ![img_12.png](img_12.png)
+  - Libraries:当某Library是所有/大部分模块都需要的依赖时，就可以上升为Project级别的依赖，抽取到Libraries标签页来统一管理。
+  - Facets:配置Project项目的框架区，它能看到项目的每个Module模块使用的框架、语言等情况，并且还可以对它们进行配置。
+  - Artifacts：打包jar、war包
+- Platform Settings：平台设置，也叫全局设置。用于管理SDK们（如JDK、Kotlin的SDK等）、全局库，用于SDK的版本切换。
+3. 关于 SDK 和 JDK
+- SDK 是“软件开发工具包”的总称，任何辅助开发某类软件的文档、工具、库的集合都可以叫 SDK；JDK 是专为 Java 语言开发的工具包，是 SDK 的一个子集。
+- IntelliJ IDEA是JVM平台IDEA，不仅仅支持Java还有其它语言如Kotlin，所以写成SDK更抽象 
+
+### maven构建和idea原生build
+1. maven常用命令
+- 执行 `mvn compile`：会**顺序执行defautlt周期中的所有阶段**，Maven 编译是调用 **maven-compiler-plugin** 插件，底层调用 javac。
+   负责三件大事：
+  1. 读取 `pom.xml` 解析依赖，去仓库下载（settings.xml 控制仓库、镜像、代理）、确认获取依赖无误
+  2. 执行插件：编译、单元测试、打包
+  3. 产物输出到 `target`
+- 执行 `mvn clean`删除项目构建生成的 target 目录，让下次构建从干净状态开始‌
+- 常用执行 `mvn clean verify` 是一条 Maven 构建命令，完整执行“清理 → 编译 → 测试 → 打包 → 验证”的流程，适合在本地或 CI 中做发布前的最终检查
+2. idea的build项目
+- 由IDEA 自己编译源码，不调用 Maven
+   1. 产物默认在 `out` 目录
+   2. 增量编译：只编译改动过的文件，速度很快
+   3. **不会执行 Maven 插件！** 不会执行 pom 里配置的 generate 代码、资源过滤、打包逻辑
+3. IDEA 和 Maven 怎么联动？
+- IDEA 内置了 Maven 支持：**导入 pom.xml，把 Maven 的项目结构、依赖同步到 IDE 的工程模型**
+- IDEA 读取 pom，解析依赖，展示 External Libraries
+- 但**编译有两个选择**：用 IDEA 自带编译器 OR 委托给 Maven
+> 【关键配置】`Settings → Build, Execution, Deployment → Build Tools → Maven → Runner`
+✅ `Delegate IDE build/run actions to Maven`
+勾选：IDEA 的 build/run 会**交给 Maven 执行**（相当于自动调用 mvn compile）
+不勾选：IDEA 用自己编译器编译（默认）
+4. idea和maven的重点配置清单
+- 打开：File → Settings → Build, Execution, Deployment → Build Tools → Maven
+  1. Maven home path：使用本地安装的maven版本
+  2. User settings file：指定 settings.xml，可勾选 override 覆盖默认路径
+  3. Local repository：本地仓库地址（由 settings.xml 定义），从指定的Nexus依赖仓库中获取合法依赖
+  4. Runner → `Delegate IDE build/run actions to Maven`
+    > 生产项目建议**勾选**，保证 IDE 打包和服务器 mvn 打包行为一致；代价是编译速度变慢，每次 build 都会走 maven。
+  5. Importing 导入选项：自动导入 pom 变更（建议勾选）、Maven 导入使用的 JDK，**和项目 SDK 保持一致**
+  6. 项目 SDK & Language level，应和IDEA Project Structure 里的 Language level 对齐，否则版本冲突
+5. 实操决策思路
+   1. **日常写代码，快速看语法报错**：不开启委托，用 IDEA 原生 Build（Ctrl+F9）速度快。
+   2. **用到 pom 插件生成代码、资源过滤**：必须执行 Maven 命令（Maven 面板 compile/package），或者开启委托 Maven。
+   3. **打包测试、准备部署，验证和线上 CI 一致**：一定要执行 `mvn package` / `mvn install`。
+
 ## 附录：
 2026.2 版本编辑器右键上下文里，已经没有 Diagrams 选项可以勾选，只能用项目树右键或者快捷键。
 
